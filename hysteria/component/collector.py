@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from loguru import logger
 from requests import Response
 
-from settings import project
+from hysteria.settings import project
 
 
 class Branch(Enum):

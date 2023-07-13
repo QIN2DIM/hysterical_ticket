@@ -3,7 +3,7 @@
 # Author     : QIN2DIM
 # Github     : https://github.com/QIN2DIM
 # Description:
-from .collector import Collector, Branch, trace_dlt_history, trace_ssq_history
+from .component.collector import Collector, Branch, trace_dlt_history, trace_ssq_history
 
 __all__ = ["Collector", "Branch", "trace_ssq_history", "trace_dlt_history"]
 __version__ = "0.1.0"

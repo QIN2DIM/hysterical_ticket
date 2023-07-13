@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Author: BigCat
-"""
 from dataclasses import dataclass
 from os.path import dirname
 from pathlib import Path
