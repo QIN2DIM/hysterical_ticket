@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 import csv
+import logging
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 from enum import Enum
 from pathlib import Path
 from typing import Literal, List, Callable
 
 import requests
 from bs4 import BeautifulSoup
-from loguru import logger
 from requests import Response
 
-from hysteria.settings import project
+logging.basicConfig(
+    level=logging.INFO, stream=sys.stdout, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 class Branch(Enum):
@@ -20,7 +23,7 @@ class Branch(Enum):
     DLT = Literal["dlt"]
 
 
-@dataclass(slots=True)
+@dataclass
 class Collector:
     branch: Literal[Branch.SSQ, Branch.DLT]
 
@@ -28,7 +31,6 @@ class Collector:
     _latest_term: str = ""
     _container: List[List[str]] = field(default_factory=list)
     _container_head: List[str] = field(default_factory=list)
-    _sp: Path = field(default_factory=Path)
     _parser: Callable = None
 
     @classmethod
@@ -51,7 +53,6 @@ class Collector:
                 "red_6",
                 "blue_1",
             ]
-            self._sp = project.path_ssq
             self._parser = self._parse_ssq_data
         elif self.branch in [Branch.DLT, "dlt"]:
             self._name = "大乐透"
@@ -65,10 +66,9 @@ class Collector:
                 "blue_1",
                 "blue_2",
             ]
-            self._sp = project.path_dlt
             self._parser = self._parse_dlt_data
         else:
-            logger.critical("Unknown branch type", branch=self.branch)
+            logging.error(f"Unknown branch type - branch={self.branch}")
             sys.exit(1)
 
     @property
@@ -83,7 +83,7 @@ class Collector:
     def headers(self):
         return {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                          "Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.79"
+            "Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.79"
         }
 
     def get_latest_term(self) -> str | None:
@@ -96,7 +96,7 @@ class Collector:
 
         latest_term = soup.find("div", class_="wrap_datachart").find("input", id="end")["value"]
         self._latest_term = latest_term
-        logger.info("get latest term", name=self._name, number=latest_term)
+        logging.info(f"get latest term - name={self.name} number={latest_term}")
 
         return latest_term
 
@@ -131,31 +131,27 @@ class Collector:
     def get_history(self):
         """获取历史数据"""
         if self._container:
-            logger.info("get history", name=self._name, length=len(self._container))
+            logging.info(f"get history - name={self._name} length={len(self._container)}")
             return self._container
 
         params = {"start": 1, "end": self.get_latest_term()}
         resp = requests.get(self.url, params=params, headers=self.headers)
         container = self._parser(response=resp)
-        logger.info("get history", name=self._name, size=len(container))
+        logging.info(f"get history - name={self._name} size={len(container)}")
 
-    def save_history(self):
-        with open(self._sp, "w", encoding="utf8", newline="") as file:
+    def save_history(self, sp: Path):
+        with open(sp, "w", encoding="utf8", newline="") as file:
             writer = csv.writer(file)
             writer.writerow(self._container_head)
             writer.writerows(self._container)
-        logger.success("save history", branch=self._name, path=str(self._sp))
+        logging.info(f"save history - branch={self._name} path={str(sp)}")
+
+        fn = f"{self._latest_term}.{self.branch}"
+        sp.parent.joinpath(fn).write_text(self._latest_term)
+        logging.info(f"save latest term - branch={self._name} path={str(sp)}")
 
 
-def _trace_history(*, branch, output: Path = None, **kwargs):
+def trace_history(branch, output: Path = None, **kwargs):
     c = Collector.from_branch(branch=branch, _sp=output, **kwargs)
     c.get_history()
-    c.save_history()
-
-
-def trace_ssq_history():
-    return _trace_history(branch="ssq")
-
-
-def trace_dlt_history():
-    return _trace_history(branch="dlt")
+    c.save_history(sp=output)

@@ -1,4 +1,5 @@
-loguru>=0.7.0
 requests>=2.31.0
 bs4>=0.0.1
 beautifulsoup4>=4.12.2
+easygui>=0.98.3
+pyperclip>=1.8.2
