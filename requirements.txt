@@ -1,0 +1,6 @@
+pyyaml>=6.0.1
+easygui>=0.98.3
+pyperclip>=1.8.2
+httpx>=0.24.1
+bs4>=0.0.1
+beautifulsoup4>=4.12.2
