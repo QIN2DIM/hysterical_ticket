@@ -7,18 +7,17 @@ import os
 import secrets
 from pathlib import Path
 
-logo = Path("static/logo.ico").absolute()
-pymain = Path("main.py").absolute()
+logo_path = Path("static/logo.ico").absolute()
+main_path = Path("main.py").absolute()
 name = "hysterical_ticket"
 key = secrets.token_hex()
 
 
 def compile1():
-    # pip install pyinstaller tinyaes
-    # pyinstaller -F -w --clean -y -i [logo] -n [name] --key [secret]
-    cmd = f"pyinstaller {pymain} -F -w --clean -y -n {name} --key={key}"
-    if logo.exists():
-        cmd += f" -i {logo}"
+    os.system("black . -C -l 100")
+    cmd = f"pyinstaller {main_path} -F -w --clean -y -n {name} --key={key}"
+    if logo_path.exists():
+        cmd += f" -i {logo_path}"
     os.system(cmd)
     print(f"--> 打包完成: {cmd}")
 
